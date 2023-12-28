@@ -5,12 +5,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/rocksdb/reader/v1")
-public class RocksDbReadController {
+@RequestMapping("/rocksdb/reader/v1/healthcheck")
+public class HealthcheckController {
 
-
-    @GetMapping("/healthcheck")
+    @GetMapping()
     public String checkHealth() {
         return "Server is Up!";
     }
+
 }
