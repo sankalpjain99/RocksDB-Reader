@@ -5,3 +5,6 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+rocksdb:
+  path: ".idea/rocksdb_data"

@@ -1,4 +1,4 @@
-package com.sankalp.rocksdbreader;
+package com.sankalp.rocksdbreader.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
