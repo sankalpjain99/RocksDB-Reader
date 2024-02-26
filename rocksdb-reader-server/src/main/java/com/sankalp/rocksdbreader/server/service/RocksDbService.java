@@ -1,7 +1,8 @@
 package com.sankalp.rocksdbreader.server.service;
 
+import com.sankalp.rocksdbreader.server.exception.InvalidColumnFamilyException;
+import com.sankalp.rocksdbreader.server.exception.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,36 +27,38 @@ public class RocksDbService {
             List<byte[]> columnFamiliesByteList = RocksDB.listColumnFamilies(new Options(), rocksDbPath);
             columnFamiliesList = columnFamiliesByteList.stream()
                 .map(String::new)
-                .collect(Collectors.toList());
+                .toList();
         } catch (RocksDBException e) {
             throw new RuntimeException(e);
         }
         return columnFamiliesList;
     }
 
-    @SneakyThrows
-    public String getValueByKey(String columnFamilyName, String key) {
+    public String getValueByKey(String columnFamilyName, String key) throws DataNotFoundException, InvalidColumnFamilyException {
         List<String> columnFamilies = getAllColumnFamilies();
         List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
         List<ColumnFamilyDescriptor> columnFamilyDescriptorList = columnFamilies.stream()
                 .map(name -> new ColumnFamilyDescriptor(name.getBytes()))
                 .toList();
-        try(DBOptions dbOptions = new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-            final RocksDB rocksDB = RocksDB.openReadOnly(dbOptions, rocksDbPath, columnFamilyDescriptorList, columnFamilyHandleList)) {
-
+        try(
+            DBOptions dbOptions = new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
+            final RocksDB rocksDB = RocksDB.openReadOnly(dbOptions, rocksDbPath, columnFamilyDescriptorList, columnFamilyHandleList)
+        ) {
             final ColumnFamilyHandle columnFamilyHandle = getColumnFamilyHandle(columnFamilyHandleList, columnFamilyName);
+            if(Objects.isNull(columnFamilyHandle)) {
+                throw new InvalidColumnFamilyException();
+            }
             byte[] keyBytes = key.getBytes();
             byte[] valueBytes = rocksDB.get(columnFamilyHandle, keyBytes);
             if(Objects.isNull(valueBytes)) {
                 log.error("No value found for key {} in column Family {}", key, columnFamilyName);
+                throw new DataNotFoundException();
             } else {
                 return new String(valueBytes);
             }
-
-        } catch (Exception e) {
-            log.error("Caught exception: ", e);
+        } catch (RocksDBException e) {
+            throw new RuntimeException(e);
         }
-        return "";
     }
 
     public void addDummyData() {
@@ -69,14 +71,13 @@ public class RocksDbService {
         try(RocksDB db = RocksDB.open(dbOptions, rocksDbPath, columnFamilyDescriptors, columnFamilyHandleList)) {
             db.put(getColumnFamilyHandle(columnFamilyHandleList, "FAMILY_1"), "Key1".getBytes(), "Value1".getBytes());
             db.put(getColumnFamilyHandle(columnFamilyHandleList, "FAMILY_2"), "Key2".getBytes(), "Value2".getBytes());
+            log.info("Dummy Data Added Successfully!");
         } catch (RocksDBException e) {
             throw new RuntimeException(e);
         }
-        log.info("Data Added Successfully!");
     }
 
-    @SneakyThrows
-    private ColumnFamilyHandle getColumnFamilyHandle(List<ColumnFamilyHandle> columnFamilyHandleList, String handleName) {
+    private ColumnFamilyHandle getColumnFamilyHandle(List<ColumnFamilyHandle> columnFamilyHandleList, String handleName) throws RocksDBException {
         for(ColumnFamilyHandle handle: columnFamilyHandleList) {
             if(new String(handle.getName()).equals(handleName)) {
                 return handle;
