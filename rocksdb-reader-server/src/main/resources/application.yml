@@ -7,4 +7,4 @@ spring:
       enabled: ALWAYS
 
 rocksdb:
-  path: ".idea/rocksdb_data"
+  path: "${ROCKSDB_PATH:.idea/rocksdb_data}"

@@ -4,6 +4,6 @@ A plug n play service to quickly view contents from your RocksDB. All you need i
 
 ## Steps to Run
 
-- Specify path to your RocksDB Database in `rocksdb-reader-server/src/main/resources/application.yml`
+- Define path for RocksDB in Env Variable: `$ROCKSDB_PATH`
 - Run Java Application
 - Swagger Link: http://localhost:8081/swagger-ui/index.html#/
