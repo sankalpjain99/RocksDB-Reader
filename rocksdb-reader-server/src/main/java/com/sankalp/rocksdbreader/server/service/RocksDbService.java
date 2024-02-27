@@ -2,6 +2,7 @@ package com.sankalp.rocksdbreader.server.service;
 
 import com.sankalp.rocksdbreader.server.exception.InvalidColumnFamilyException;
 import com.sankalp.rocksdbreader.server.exception.DataNotFoundException;
+import com.sankalp.rocksdbreader.server.model.request.SearchKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.*;
@@ -34,7 +35,9 @@ public class RocksDbService {
         return columnFamiliesList;
     }
 
-    public String getValueByKey(String columnFamilyName, String key) throws DataNotFoundException, InvalidColumnFamilyException {
+    public String getValueByKey(SearchKey searchKey) throws DataNotFoundException, InvalidColumnFamilyException {
+        String columnFamilyName = searchKey.getColumnFamilyName();
+        String key = searchKey.getKey();
         List<String> columnFamilies = getAllColumnFamilies();
         List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
         List<ColumnFamilyDescriptor> columnFamilyDescriptorList = columnFamilies.stream()
